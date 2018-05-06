@@ -6,6 +6,7 @@
 
 ## コントローラ分割の基準
 
+
 ### 原則
 #### CRUD以外のアクションは作らない
 基本的には、CRUD以外のアクションを実装してはならない。
@@ -21,12 +22,20 @@
   <dd>期待する処理について具体的に書く</dd>
   <dt>before</dt>
   <dd>そのspecのテスト全てに共通して使うテストデータに関する処理を中に記述する</dd>
+  <dt>expect</dt>
+  <dd>expect(期待するもの).to matcher という記述の仕方で、実際の値と期待する値を比較検証する</dd>
 </dl>
 
+###アンチパターン集
+* privateメソッドをテストすること
+  * privateメソッドは普通のアクション内で使われるはずなので間接的にテストを行うべきです。
+* 必要のないテストデータを作成する
+  * そのテストに使わないテストデータは作っても遅くなるだけなので作らないべきです。
 ### modelのテスト
 
 
 ### request（controller）のテスト
+requestのテストをすることによって、コントローラーの処理自体もHTTPリクエストに関するテストも同時にできるので、requestのテストを使用します。
 
 ## getのテストの場合
 
@@ -35,9 +44,9 @@ require 'rails_helper'
 
 RSpec.describe "Video", type: :request do
   describe "#index" #メソッド名を書く
-    describe 'GET /api/videos/:id.json' do
+    describe 'GET /api/videos/:id' do
 
-      #ここでのデータをまとめる
+      #ここでデータをまとめる
       before do
         @video = FactoryBot.create(:video)
 
@@ -48,18 +57,17 @@ RSpec.describe "Video", type: :request do
       end
 
       #HTTPリクエストに関しては、
-      subject do
-        get "/api/videos/#{@video.id}.json"
+      subject(:index_action) do
+        get "/api/videos/#{@video.id}.json", headers: @headers
       end
 
       it '200 OK が返ってくる' do
-        subject
-        expect(response).to be_success
+        index_action
         expect(response.status).to eq(200)
       end
 
       it '動画情報を取得できる' do
-        subject
+        index_action
         json = JSON.parse(response.body)
         expect(json['title']).to eq(@video.title)
         expect(json['status']).to eq(@video.status)
@@ -69,5 +77,7 @@ RSpec.describe "Video", type: :request do
 end
 
 ```
-このようにHTTPステータスコードが200(OK)になることのテストを記述した上で、
-json形式で送られた値が想定するものと一致しているのかのテストも記述します。
+#####このようにHTTPステータスコードが200(OK)になることのテストを記述した上で、json形式で送られた値が想定するものと一致しているのかのテストも記述します。
+
+
+#####subjectに関しては suject だと何の処理を表しているのかわからないので、アクション名をつけてあげる
