@@ -32,12 +32,13 @@
   * privateメソッドは普通のアクション内で使われるはずなので間接的にテストを行うべきです。
 * 必要のないテストデータを作成する
   * そのテストに使わないテストデータは作っても遅くなるだけなので作らないべきです。
-## modelのテスト
+
+### modelのテスト
 modelのテストに関しては主に、scopeのテストおよびバリデーションのテストを行います。ただし、private内のscopeに関しては直接テストせずに、publicのscopeで間接的にテストを行います。
 
-### scopeのテスト
+#### scopeのテスト
 
-#### app/models/score.rb
+##### app/models/score.rb
 
 ```ruby
     scope :of_opponent_users_games, ->(user, opponent_users, user_count) {
@@ -73,7 +74,7 @@ modelのテストに関しては主に、scopeのテストおよびバリデー�
           )
       }
 ```
-#### spec/model/score_spec.rb
+##### spec/model/score_spec.rb
 
 ```ruby
 describe "scopes" do
@@ -112,46 +113,95 @@ end
 requestのテストをすることによって、コントローラーの処理自体もHTTPリクエストに関するテストも同時にできるので、requestのテストを使用します。
 
 ### getのテストの場合
-
-```ruby:video_spec.rb
+##### games_spec.rb
+```ruby
     require 'rails_helper'
 
-    RSpec.describe "Video", type: :request do
-      describe "#index" #メソッド名を書く
-        describe 'GET /api/videos/:id' do
+RSpec.describe "Games", type: :request do
 
-          #ここでデータをまとめる
-          before do
-            @video = FactoryBot.create(:video)
+  describe "GET /games" do
+    before do
+      unit = create(:unit)
+      game = create(:game)
+      unit.games << game
 
-            #TODO 共通処理として切り出す
-              @headers = { 'Content-Type' => 'application/json', 'ACCEPT' => 'application/json' }
-              auth_header = @user.create_new_auth_token
-              @headers.merge! auth_header
-          end
+      opponent_unit = create(:unit)
+      opponent_unit.games << game
 
-          #HTTPリクエストに関しては、
-          subject(:index_action) do
-            get "/api/videos/#{@video.id}.json", headers: @headers
-          end
+      @user = create(:user)
+      opponent_user = create(:user)
 
-          it '200 OK が返ってくる' do
-            index_action
-            expect(response.status).to eq(200)
-          end
+      unit.users << @user
+      opponent_unit.users << @pponent_user
 
-          it '動画情報を取得できる' do
-            index_action
-            json = JSON.parse(response.body)
-            expect(json['title']).to eq(@video.title)
-            expect(json['status']).to eq(@video.status)
-          end
-        end
-      end
+      score =  Score.create(game_id: game.id, shot_type_id: 1, dropped_side: 1, unit_id: unit.id, position_id: 1)
+      game.scores << score
+
+      #TODO 共通処理として切り出す
+      @headers = { 'Content-Type' => 'application/json', 'Accept' => 'application/json' }
+      auth_header = @user.create_new_auth_token
+      @headers.merge! auth_header
     end
 
+    let(:current_api_v1_user) { @user }
+
+    subject do
+      get "/api/v1/games", headers: @headers
+    end
+
+    it "return 200" do
+      subject
+      expect(response).to have_http_status(200)
+    end
+
+    it "現在のユーザから取れるgameの情報を送る" do
+      subject
+      expect(json['games'].length).to eq 1
+    end
+  end
 ```
-###### このようにHTTPステータスコードが200(OK)になることのテストを記述した上で、json形式で送られた値が想定するものと一致しているのかのテストも記述します。
+このようにHTTPステータスコードが200(OK)になることのテストを記述した上で、json形式で送られた値が想定するものと一致しているのかのテストも記述します。
 
 
-####### subjectに関しては suject だと何の処理を表しているのかわからないので、アクション名をつけてあげる
+### postのテストの場合
+##### games_spec.rb
+```ruby
+#paramsはletで作るようにする
+let(:params) do
+      {
+        units: {
+          left: {users: [{id: 1}], count: 1},
+          right: {users: [{id: 2}], count: 1},
+          ids: [1, 2]
+        },
+        scores: [
+          {unit: 0, dropped_at: 1, shot_type: 1, miss_type: 0, side: 0},
+          {unit: 0, dropped_at: 2, shot_type: 2, miss_type: 0, side: 0},
+          {unit: 1, dropped_at: 3, shot_type: 3, miss_type: 0, side: 1},
+          {unit: 1, dropped_at: 4, shot_type: 4, miss_type: 0, side: 1},
+          {unit: 1, dropped_at: 5, shot_type: 5, miss_type: 0, side: 1}
+        ],
+        game: {name: "トレーニングマッチ"} ,
+      }
+    end
+
+    subject do
+      post "/api/v1/games", params: params, as: :json, headers: @headers
+    end
+
+    it 'return 200' do
+      subject
+      expect(response.status).to eq 200
+    end
+
+    it 'Gameが1つ作成される' do
+      expect{ subject }.to change(Game, :count).by(1)
+    end
+    it 'Unitが2つ作成される' do
+      expect{ subject }.to change(Unit, :count).by(2)
+    end
+    it 'Scoreが5つ作成される' do
+      expect{ subject }.to change(Score, :count).by(5)
+    end
+```
+postリクエストに関するテストでは、HTTPステータスコードが200(OK)になることのテストを記述した上で実際にレコードが作成されたのかを確認するテストを記述します。
