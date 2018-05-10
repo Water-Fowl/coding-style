@@ -18,12 +18,17 @@
 <dl>
   <dt>describe</dt>
   <dd>何についてのテストであるのかをまとめるために使う</dd>
+  <dd>model  scopesやvalidatesなどの名前を付け、　テストする対象をまとめます</dd>
+  <dd>request  'GET /users/:user_id #show' のようにどこにリクエストを送っているのかとアクション名がわかるように記述します</dd>
   <dt>it</dt>
   <dd>期待する処理について具体的に書く</dd>
+  <dd>'Gameが1つ作成される'のようにそのテストするメソッドなどがそういう挙動を示せば良いのかをわかりやすく記述する</dd>
   <dt>before</dt>
   <dd>そのspecのテスト全てに共通して使うテストデータに関する処理を中に記述する</dd>
+  <dd>itの中などで使う変数は　＠を付けて @user のようにする。それ以外は game のように書く</dd>
   <dt>expect</dt>
   <dd>expect(期待するもの).to matcher という記述の仕方で、実際の値と期待する値を比較検証する</dd>
+  <dd><a href="https://relishapp.com/rspec/rspec-expectations/v/3-4/docs/built-in-matchers" target="_blank">matcher一覧</dd>_
 </dl>
 
 
@@ -41,29 +46,6 @@ modelのテストに関しては主に、scopeのテストおよびバリデー�
 ##### app/models/score.rb
 
 ```ruby
-    scope :of_opponent_users_games, ->(user, opponent_users, user_count) {
-        where(
-          game_id: Game
-          .of_opponent_users(user, opponent_users, user_count)
-          .pluck(:id)
-        )
-      }
-      scope :of_user_games, ->(user, user_count) {
-        where(
-          game_id: Game.joins(:units)
-          .where(units: { id: user.units.where(user_count: user_count).pluck(:id) })
-          .pluck(:id)
-        )
-      }
-
-      scope :of_user_units, ->(user) {
-        joins(:users)
-          .where(
-            users: {
-              id: user.id
-            }
-          )
-      }
 
       scope :of_not_user_units, ->(user) {
         joins(:users)
@@ -79,24 +61,6 @@ modelのテストに関しては主に、scopeのテストおよびバリデー�
 ```ruby
 describe "scopes" do
 
-    describe "of_opponent_users_games" do
-      it "user vs opponent_users の試合におけるスコアの検索" do
-        expect(Score.of_opponent_users_games(Unit.first.users.first, Unit.second.users, 1).pluck(:id)).to eq @game.scores.pluck(:id)
-      end
-    end
-
-    describe "of_user_games" do
-      it "userが含まれている試合のscore検索" do
-        expect(Score.of_user_games(Unit.first.users.first, 1).pluck(:id)).to eq Unit.first.users.first.games.first.scores.pluck(:id)
-      end
-    end
-
-    describe "of_user_units" do
-      it "userが含まれているunitのscoreの検索" do
-        expect(Score.of_user_units(Unit.first.users.first).pluck(:id)).to eq Unit.first.scores.pluck(:id)
-      end
-    end
-
     describe "of_not_user_units" do
       it "userが含まれていないunitの検索" do
         expect(Score.of_not_user_units(Unit.first.users.first).pluck(:id)).to eq Unit.second.scores.pluck(:id)
@@ -106,7 +70,7 @@ describe "scopes" do
 end
 
 ```
-##### scopeそれぞれで期待する値が取れているのかどうかを確認します。この際、返ってくるハッシュの中身は同じですが、形式的なズレがあるため、 eqで確認する場合はidにそれぞれ変換させて検証する必要があります。
+scopeは、describeで全てまとめておくようにします。scopeそれぞれで期待する値が取れているのかどうかを確認します。この際、返ってくるハッシュの中身は同じですが、形式的なズレがあるため、 eqで確認する場合はidにそれぞれ変換させて検証する必要があります。
 
 
 ## request（controller）のテスト
@@ -120,36 +84,16 @@ requestのテストをすることによって、コントローラーの処理�
 RSpec.describe "Games", type: :request do
 
   describe "GET /games" do
-    before do
-      unit = create(:unit)
-      game = create(:game)
-      unit.games << game
 
-      opponent_unit = create(:unit)
-      opponent_unit.games << game
-
-      @user = create(:user)
-      opponent_user = create(:user)
-
-      unit.users << @user
-      opponent_unit.users << @pponent_user
-
-      score =  Score.create(game_id: game.id, shot_type_id: 1, dropped_side: 1, unit_id: unit.id, position_id: 1)
-      game.scores << score
-
-      #TODO 共通処理として切り出す
-      @headers = { 'Content-Type' => 'application/json', 'Accept' => 'application/json' }
-      auth_header = @user.create_new_auth_token
-      @headers.merge! auth_header
-    end
-
-    let(:current_api_v1_user) { @user }
+            .
+            .
+            .
 
     subject do
       get "/api/v1/games", headers: @headers
     end
 
-    it "return 200" do
+    it "ステータスコード200を返す" do
       subject
       expect(response).to have_http_status(200)
     end
@@ -166,7 +110,10 @@ RSpec.describe "Games", type: :request do
 ### postのテストの場合
 ##### games_spec.rb
 ```ruby
-#paramsはletで作るようにする
+            .
+            .
+            .
+#paramsはletで作るようにする(必要な値のみを渡すようにする)
 let(:params) do
       {
         units: {
@@ -189,7 +136,7 @@ let(:params) do
       post "/api/v1/games", params: params, as: :json, headers: @headers
     end
 
-    it 'return 200' do
+    it 'ステータスコード200を返す' do
       subject
       expect(response.status).to eq 200
     end
@@ -205,3 +152,29 @@ let(:params) do
     end
 ```
 postリクエストに関するテストでは、HTTPステータスコードが200(OK)になることのテストを記述した上で実際にレコードが作成されたのかを確認するテストを記述します。
+
+
+### put(patch)のテストの場合
+##### users_spec.rb
+```ruby
+describe 'PUT #update' do
+
+          .
+          .
+          .
+
+    it 'ステータスコード200を返す' do
+      subject
+      expect(response.status).to eq 200
+    end
+
+    it '更新されたユーザー情報を返す' do
+      subject
+      expect(json['user']['name']).to eq(params[:name])
+      expect(json['user']['sport_id']).to eq(params[:sport_id])
+    end
+  end
+```
+
+put のテストの場合は、本当に値が更新されているのかについても確認します。
+userの場合はemail、パスワードの変更に関しては、認証メールを送り、認証リンクを踏んでもらわないといけないので変更確認ができないため、ここではnameとsport_idが変化しているのかを検証しています。
