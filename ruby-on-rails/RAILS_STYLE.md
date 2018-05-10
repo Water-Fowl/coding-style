@@ -18,7 +18,7 @@
 <dl>
   <dt>describe</dt>
   <dd>何についてのテストであるのかをまとめるために使う</dd>
-  <dd>model  scopesやvalidatesなどの名前を付け、　テストする対象をまとめます</dd>
+  <dd>model  scopesやvalidatesなどの名前を付け、テストする対象をまとめます</dd>
   <dd>request  'GET /users/:user_id #show' のようにどこにリクエストを送っているのかとアクション名がわかるように記述します</dd>
   <dt>it</dt>
   <dd>期待する処理について具体的に書く</dd>
@@ -28,7 +28,7 @@
   <dd>itの中などで使う変数は　＠を付けて @user のようにする。それ以外は game のように書く</dd>
   <dt>expect</dt>
   <dd>expect(期待するもの).to matcher という記述の仕方で、実際の値と期待する値を比較検証する</dd>
-  <dd><a href="https://relishapp.com/rspec/rspec-expectations/v/3-4/docs/built-in-matchers" target="_blank">matcher一覧</dd>_
+  <dd><a href="https://relishapp.com/rspec/rspec-expectations/v/3-4/docs/built-in-matchers" target="_blank">matcher一覧</dd>
 </dl>
 
 
@@ -152,6 +152,7 @@ let(:params) do
     end
 ```
 postリクエストに関するテストでは、HTTPステータスコードが200(OK)になることのテストを記述した上で実際にレコードが作成されたのかを確認するテストを記述します。
+paramsはletを用いて初期化します。
 
 
 ### put(patch)のテストの場合
