@@ -19,16 +19,20 @@
   <dt>describe</dt>
   <dd>何についてのテストであるのかをまとめるために使う</dd>
   <dd>model  scopesやvalidatesなどの名前を付け、テストする対象をまとめます</dd>
-  <dd>request  'GET /users/:user_id #show' のようにどこにリクエストを送っているのかとアクション名がわかるように記述します</dd>
+  <dd>request  'GET /users/:user_id #show' のようにどこにリクエストを送っているのかとアクション名がわかるように記述する</dd>
   <dt>it</dt>
   <dd>期待する処理について具体的に書く</dd>
   <dd>'Gameが1つ作成される'のようにそのテストするメソッドなどがそういう挙動を示せば良いのかをわかりやすく記述する</dd>
+  <dd>_ステータスコード200(OKの意味)のテストに関しては、 'ステータスコード２００を返す' で統一する_</dd>
+  <dd>_scopeなどの想定する値を返せるかに関するテストは '(期待する値を分かりやすく)を返す'で統一する_</dd>
+  <dd>_request内のメソッドなど、クライアント側にデータを渡せているのかのテストに関しては、'(期待する値を分かりやすく)を送る'で統一する_</dd>
+  <dd>_create後にデータベースに値が保存されたかに関するテストは、'(作成されるのを期待するモデル名など)が作成される'で統一する_</dd>
   <dt>before</dt>
   <dd>そのspecのテスト全てに共通して使うテストデータに関する処理を中に記述する</dd>
-  <dd>itの中などで使う変数は　＠を付けて @user のようにする。それ以外は game のように書く</dd>
+  <dd>_itの中などで使う変数は　＠を付けて @user のようにする。それ以外は game のように書く_</dd>
   <dt>expect</dt>
-  <dd>expect(期待するもの).to matcher という記述の仕方で、実際の値と期待する値を比較検証する</dd>
-  <dd><a href="https://relishapp.com/rspec/rspec-expectations/v/3-4/docs/built-in-matchers" target="_blank">matcher一覧</dd>
+  <dd>itのなかに記述し、expect(期待するもの).to matcher という記述の仕方で、実際の値と期待する値を比較検証する</dd>
+  <dd><a href="https://relishapp.com/rspec/rspec-expectations/v/3-4/docs/built-in-matchers">matcher一覧</dd>
 </dl>
 
 
@@ -98,7 +102,7 @@ RSpec.describe "Games", type: :request do
       expect(response).to have_http_status(200)
     end
 
-    it "現在のユーザから取れるgameの情報を送る" do
+    it "現在のユーザから取れるgameを送る" do
       subject
       expect(json['games'].length).to eq 1
     end
@@ -169,7 +173,7 @@ describe 'PUT #update' do
       expect(response.status).to eq 200
     end
 
-    it '更新されたユーザー情報を返す' do
+    it '更新されたユーザー情報を送る' do
       subject
       expect(json['user']['name']).to eq(params[:name])
       expect(json['user']['sport_id']).to eq(params[:sport_id])
