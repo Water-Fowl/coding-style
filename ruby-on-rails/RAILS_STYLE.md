@@ -46,15 +46,17 @@ modelのテストは、publicなメソッドのみに対して行う。
 
 ##### フォーマット
 - describe
-scopeの中にネストして、scopeのメソッド名を書く。
+    - `describe scope`の中にネストする。
+    - scopeのメソッド名を書く。
 - it
-帰ってきて欲しい値がどのようなものかを書く。
+    - 帰ってきて欲しい値が何かを書く。
+    - `~を返す`というフォーマットで書く。
 
 ```ruby
 describe "scopes" do
     describe "of_not_user_units" do
       it "指定したユーザーを含むUnitを返す" do
-        expect(Score.of_not_user_units(Unit.first.users.first).pluck(:id)).to eq Unit.second.scores.pluck(:id)
+        ...
       end
     end
 end
@@ -85,4 +87,6 @@ end
 
 ```
 - it
-帰ってきて欲しい値がどのようなものかを書く。
+    - 帰ってきて欲しい値がどのようなものかを書く。
+    - 返ってくる値が正しいかどうかを確認するときは、`~を返す`というフォーマットで書く。
+    - 値が遅れているかどうかを確認するときは、`~を送る`というフォーマットで書く。
